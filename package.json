@@ -1,0 +1,14 @@
+{
+  "name": "subtitle-burner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "把字幕直接烧进视频的本地小工具",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js"
+  }
+}

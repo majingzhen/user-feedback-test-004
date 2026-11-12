@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>字幕烧录</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23151a24'/%3E%3Cpath d='M8 12h16M8 17h10' stroke='%237d6bff' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M18 20l6 3-6 3z' fill='%23e9ecf3'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/panels.css">
+</head>
+<body>
+  <svg class="svg-sprite" aria-hidden="true">
+    <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16"/></symbol>
+    <symbol id="i-captions" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h3M7 14h6M12 10h5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M8 9l4-4 4 4M4 17v3h16v-3"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M8 11l4 4 4-4M4 20h16"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="7" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M5 5v14M19 6l-10 6 10 6z"/></symbol>
+    <symbol id="i-forward" viewBox="0 0 24 24"><path d="M19 5v14M5 6l10 6-10 6z"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.6M4 4v5h5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 9v5M12 17v.01"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 4.9L19 9.7l-4.4 3.3L16 18l-4-2.8L8 18l1.4-5L5 9.7l5.2-1.8z"/></symbol>
+  </svg>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <rect x="2" y="2" width="28" height="28" rx="9" class="brand-bg"/>
+            <path d="M9 12h15M9 17h10" class="brand-lines"/>
+            <path d="M18 20l6 3-6 3z" class="brand-play"/>
+          </svg>
+        </div>
+        <div class="brand-copy">
+          <span class="brand-title">字幕烧录</span>
+          <span class="brand-sub">SUB BURNER</span>
+        </div>
+      </div>
+
+      <div class="file-chips" id="file-chips">
+        <button class="file-chip" id="chip-video" type="button" hidden>
+          <svg class="icon"><use href="#i-film"></use></svg>
+          <span class="file-chip-name" id="chip-video-name">视频</span>
+        </button>
+        <button class="file-chip" id="chip-subtitle" type="button" hidden>
+          <svg class="icon"><use href="#i-captions"></use></svg>
+          <span class="file-chip-name" id="chip-subtitle-name">字幕</span>
+        </button>
+      </div>
+
+      <div class="topbar-actions">
+        <span class="save-state" id="save-state">
+          <span class="save-dot" id="save-dot"></span>
+          <span id="save-text">已保存</span>
+        </span>
+        <button class="btn btn-ghost" id="btn-import" type="button">
+          <svg class="icon"><use href="#i-upload"></use></svg>
+          <span>导入文件</span>
+        </button>
+        <button class="btn btn-primary" id="btn-export" type="button" disabled>
+          <svg class="icon"><use href="#i-spark"></use></svg>
+          <span>导出视频</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace" id="workspace">
+      <div class="tool-banner" id="tool-banner" hidden>
+        <svg class="icon"><use href="#i-alert"></use></svg>
+        <span id="tool-banner-text"></span>
+      </div>
+
+      <div class="upload-banner" id="upload-banner" hidden>
+        <span class="spinner spinner-sm"></span>
+        <div class="upload-banner-text">
+          <strong id="upload-title">正在上传视频</strong>
+          <span id="upload-detail">0%</span>
+        </div>
+        <div class="upload-progress"><div class="upload-progress-fill" id="upload-bar"></div></div>
+        <button class="btn btn-ghost btn-sm" id="btn-cancel-upload" type="button">取消</button>
+      </div>
+
+      <section class="empty-state" id="empty-state">
+        <div class="empty-card">
+          <div class="empty-mark">
+            <svg class="icon"><use href="#i-captions"></use></svg>
+          </div>
+          <h1>把视频和字幕丢进来</h1>
+          <p class="empty-sub">预览位置、字号与样式，确认后直接烧进视频。所有调整都会自动保存。</p>
+
+          <div class="drop-grid">
+            <button class="drop-card" id="drop-video" type="button">
+              <div class="drop-card-icon"><svg class="icon"><use href="#i-film"></use></svg></div>
+              <div class="drop-card-copy">
+                <strong>视频文件</strong>
+                <span>MP4 / MOV / MKV / WEBM</span>
+              </div>
+              <span class="drop-card-action">选择</span>
+            </button>
+            <button class="drop-card" id="drop-subtitle" type="button">
+              <div class="drop-card-icon"><svg class="icon"><use href="#i-captions"></use></svg></div>
+              <div class="drop-card-copy">
+                <strong>字幕文件</strong>
+                <span>SRT / ASS / VTT · 自动识别编码</span>
+              </div>
+              <span class="drop-card-action">选择</span>
+            </button>
+          </div>
+
+          <div class="empty-note" id="empty-note" hidden>
+            <svg class="icon"><use href="#i-check"></use></svg>
+            <span>字幕已就绪：<strong id="empty-note-name"></strong>，再拖入视频即可</span>
+          </div>
+          <div class="empty-hint">也可以把两个文件一起拖到窗口任意位置</div>
+        </div>
+      </section>
+
+      <section class="editor" id="editor" hidden>
+        <div class="preview-column">
+          <div class="preview-stage" id="preview-stage">
+            <div class="preview-frame" id="preview-frame">
+              <video id="video" playsinline preload="metadata"></video>
+              <canvas id="overlay" aria-hidden="true"></canvas>
+              <img id="exact-frame" alt="精确渲染预览" hidden>
+              <div class="preview-empty" id="preview-empty" hidden>
+                <div class="preview-empty-inner">
+                  <svg class="icon"><use href="#i-captions"></use></svg>
+                  <span>拖入字幕文件，开始预览</span>
+                </div>
+              </div>
+              <div class="preview-pending" id="preview-pending" hidden>
+                <span class="spinner"></span>
+                <div class="preview-pending-text">
+                  <strong id="pending-title">正在生成预览代理</strong>
+                  <span id="pending-detail">当前视频编码浏览器无法直接播放</span>
+                </div>
+                <div class="progress-track"><div class="progress-fill" id="pending-bar"></div></div>
+                <button class="btn btn-ghost btn-sm" id="btn-preview-retry" type="button" hidden>重试</button>
+              </div>
+              <div class="preview-caption" id="preview-caption" hidden>
+                <span class="spinner spinner-sm"></span>
+                <span id="preview-caption-text">精确渲染中…</span>
+              </div>
+              <div class="drop-veil" id="drop-veil" hidden>
+                <div class="drop-veil-inner">松开鼠标，替换文件</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-meta">
+            <div class="meta-left">
+              <span class="meta-item" id="meta-resolution">—</span>
+              <span class="meta-dot"></span>
+              <span class="meta-item" id="meta-duration">—</span>
+              <span class="meta-dot"></span>
+              <span class="meta-item" id="meta-subtitle">无字幕</span>
+            </div>
+            <button class="switch-row" id="btn-exact" type="button" aria-pressed="true" title="暂停时叠加 ffmpeg 实际渲染的帧，所见即导出效果">
+              <span class="switch" aria-hidden="true"><span class="switch-thumb"></span></span>
+              <span>精确预览</span>
+            </button>
+          </div>
+
+          <div class="transport">
+            <div class="transport-left">
+              <button class="play-btn" id="btn-play" type="button" aria-label="播放">
+                <svg class="icon icon-solid" id="icon-play"><use href="#i-play"></use></svg>
+                <svg class="icon icon-solid" id="icon-pause" hidden><use href="#i-pause"></use></svg>
+              </button>
+              <span class="time-readout"><span id="time-current">00:00.0</span><span class="time-sep">/</span><span id="time-total">00:00.0</span></span>
+            </div>
+            <div class="transport-hint">空格 播放 / 暂停 · ← → 跳 5 秒</div>
+            <div class="transport-right">
+              <button class="icon-btn" id="btn-skip-back" type="button" aria-label="后退 5 秒">
+                <svg class="icon"><use href="#i-back"></use></svg>
+              </button>
+              <button class="icon-btn" id="btn-skip-fwd" type="button" aria-label="前进 5 秒">
+                <svg class="icon"><use href="#i-forward"></use></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="timeline-card">
+            <div class="timeline-head">
+              <span class="timeline-title">时间轴</span>
+              <span class="timeline-offset" id="timeline-offset">偏移 +0.00s</span>
+            </div>
+            <div class="timeline" id="timeline">
+              <div class="timeline-ruler" id="timeline-ruler"></div>
+              <div class="timeline-track" id="timeline-track">
+                <div class="timeline-cues" id="timeline-cues"></div>
+                <div class="timeline-playhead" id="timeline-playhead"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="sidebar" id="sidebar">
+          <div class="tabs" role="tablist" aria-label="编辑面板">
+            <button class="tab is-active" id="tab-style" type="button" role="tab" aria-selected="true">字幕样式</button>
+            <button class="tab" id="tab-timing" type="button" role="tab" aria-selected="false">时间与文本</button>
+          </div>
+
+          <div class="panel style-panel" id="panel-style" role="tabpanel">
+            <div class="panel-scroll">
+              <section class="setting-group">
+                <div class="group-head">
+                  <h2>文字</h2>
+                  <span class="group-note">自动保存 · 替换字幕不重置</span>
+                </div>
+                <label class="field">
+                  <span class="field-label">字体</span>
+                  <input class="text-input" id="font-name" list="font-options" spellcheck="false" autocomplete="off">
+                </label>
+                <p class="hint">使用系统中已安装的字体；暂停时会显示 ffmpeg 实际渲染的校验帧。</p>
+                <datalist id="font-options">
+                  <option value="Microsoft YaHei"></option>
+                  <option value="Microsoft YaHei UI"></option>
+                  <option value="SimHei"></option>
+                  <option value="SimSun"></option>
+                  <option value="KaiTi"></option>
+                  <option value="FangSong"></option>
+                  <option value="DengXian"></option>
+                  <option value="Source Han Sans SC"></option>
+                  <option value="Noto Sans SC"></option>
+                  <option value="Noto Serif SC"></option>
+                  <option value="HarmonyOS Sans SC"></option>
+                  <option value="Arial"></option>
+                  <option value="Times New Roman"></option>
+                  <option value="Georgia"></option>
+                  <option value="Impact"></option>
+                </datalist>
+
+                <div class="field">
+                  <div class="field-line">
+                    <span class="field-label">字号</span>
+                    <span class="field-value" id="font-size-value">—</span>
+                  </div>
+                  <input type="range" id="font-size" min="10" max="200" step="1" value="50">
+                </div>
+
+                <div class="segmented" role="group" aria-label="字形">
+                  <button class="segment" id="toggle-bold" type="button" aria-pressed="false">
+                    <span class="segment-glyph glyph-bold">B</span> 粗体
+                  </button>
+                  <button class="segment" id="toggle-italic" type="button" aria-pressed="false">
+                    <span class="segment-glyph glyph-italic">I</span> 斜体
+                  </button>
+                </div>
+
+                <label class="color-field">
+                  <span class="field-label">文字颜色</span>
+                  <span class="color-control">
+                    <input type="color" id="color-text" value="#ffffff">
+                    <span class="color-hex" id="color-text-value">#FFFFFF</span>
+                  </span>
+                </label>
+              </section>
+
+              <section class="setting-group">
+                <div class="group-head"><h2>描边与背景</h2></div>
+                <div class="segmented mode-seg" role="group" aria-label="背景模式">
+                  <button class="segment is-active" id="mode-outline" type="button" aria-pressed="true">描边</button>
+                  <button class="segment" id="mode-box" type="button" aria-pressed="false">底板</button>
+                </div>
+
+                <div class="field">
+                  <div class="field-line">
+                    <span class="field-label" id="outline-label">描边宽度</span>
+                    <span class="field-value" id="outline-value">—</span>
+                  </div>
+                  <input type="range" id="outline-width" min="0" max="20" step="0.5" value="6">
+                </div>
+
+                <label class="color-field">
+                  <span class="field-label" id="outline-color-label">描边颜色</span>
+                  <span class="color-control">
+                    <input type="color" id="color-outline" value="#000000">
+                    <span class="color-hex" id="color-outline-value">#000000</span>
+                  </span>
+                </label>
+
+                <div class="field" id="row-box-alpha" hidden>
+                  <div class="field-line">
+                    <span class="field-label">底板不透明度</span>
+                    <span class="field-value" id="box-alpha-value">55%</span>
+                  </div>
+                  <input type="range" id="box-alpha" min="0" max="100" step="1" value="55">
+                </div>
+
+                <div class="field">
+                  <div class="field-line">
+                    <span class="field-label">阴影</span>
+                    <span class="field-value" id="shadow-value">—</span>
+                  </div>
+                  <input type="range" id="shadow-size" min="0" max="20" step="0.5" value="0">
+                </div>
+
+                <div class="color-row" id="row-shadow-color">
+                  <label class="color-field">
+                    <span class="field-label">阴影颜色</span>
+                    <span class="color-control">
+                      <input type="color" id="color-shadow" value="#000000">
+                      <span class="color-hex" id="color-shadow-value">#000000</span>
+                    </span>
+                  </label>
+                  <div class="field field-inline">
+                    <span class="field-label">不透明度 <span class="field-value" id="shadow-alpha-value">55%</span></span>
+                    <input type="range" id="shadow-alpha" class="mini-range" min="0" max="100" step="1" value="55">
+                  </div>
+                </div>
+              </section>
+
+              <section class="setting-group">
+                <div class="group-head"><h2>位置</h2></div>
+                <div class="field">
+                  <span class="field-label">对齐</span>
+                  <div class="align-grid" id="align-grid" role="group" aria-label="字幕对齐位置">
+                    <button class="align-btn" type="button" data-align="7" aria-label="左上" title="左上"><span></span></button>
+                    <button class="align-btn" type="button" data-align="8" aria-label="居中上方" title="居中上方"><span></span></button>
+                    <button class="align-btn" type="button" data-align="9" aria-label="右上" title="右上"><span></span></button>
+                    <button class="align-btn" type="button" data-align="4" aria-label="左中" title="左中"><span></span></button>
+                    <button class="align-btn" type="button" data-align="5" aria-label="正中" title="正中"><span></span></button>
+                    <button class="align-btn" type="button" data-align="6" aria-label="右中" title="右中"><span></span></button>
+                    <button class="align-btn" type="button" data-align="1" aria-label="左下" title="左下"><span></span></button>
+                    <button class="align-btn" type="button" data-align="2" aria-label="居中下方" title="居中下方"><span></span></button>
+                    <button class="align-btn" type="button" data-align="3" aria-label="右下" title="右下"><span></span></button>
+                  </div>
+                </div>
+                <div class="field">
+                  <div class="field-line">
+                    <span class="field-label">左右边距</span>
+                    <span class="field-value" id="margin-h-value">—</span>
+                  </div>
+                  <input type="range" id="margin-h" min="0" max="45" step="0.5" value="5">
+                </div>
+                <div class="field">
+                  <div class="field-line">
+                    <span class="field-label">垂直边距</span>
+                    <span class="field-value" id="margin-v-value">—</span>
+                  </div>
+                  <input type="range" id="margin-v" min="0" max="45" step="0.5" value="4">
+                </div>
+                <p class="hint">上、下对齐按边距定位；垂直居中会自动居中，忽略边距。</p>
+              </section>
+
+              <section class="setting-group">
+                <button class="btn btn-ghost btn-full" id="btn-reset-style" type="button">
+                  <svg class="icon"><use href="#i-reset"></use></svg>
+                  <span>恢复默认样式</span>
+                </button>
+              </section>
+            </div>
+          </div>
+
+          <div class="panel timing-panel" id="panel-timing" role="tabpanel" hidden>
+            <div class="offset-card">
+              <div class="offset-head">
+                <span>全局时间偏移</span>
+                <span class="hint">正数延后，负数提前</span>
+              </div>
+              <div class="offset-main">
+                <div class="offset-input-wrap">
+                  <input class="text-input" id="offset-input" type="number" step="0.01" value="0">
+                  <span class="offset-unit">秒</span>
+                </div>
+                <button class="btn btn-ghost btn-sm" id="offset-reset" type="button">归零</button>
+              </div>
+              <div class="offset-quick">
+                <button class="btn btn-ghost btn-sm" id="offset-minus-1" type="button">−1s</button>
+                <button class="btn btn-ghost btn-sm" id="offset-minus-01" type="button">−0.1s</button>
+                <button class="btn btn-ghost btn-sm" id="offset-plus-01" type="button">+0.1s</button>
+                <button class="btn btn-ghost btn-sm" id="offset-plus-1" type="button">+1s</button>
+              </div>
+            </div>
+
+            <div class="cue-list-head">
+              <span>字幕列表 <span class="count-chip" id="cue-count">0</span></span>
+              <button class="btn btn-ghost btn-sm" id="btn-locate-current" type="button">
+                <svg class="icon"><use href="#i-target"></use></svg>
+                <span>定位当前</span>
+              </button>
+            </div>
+
+            <div class="cue-list" id="cue-list"></div>
+
+            <div class="cue-empty" id="cue-empty">
+              <svg class="icon"><use href="#i-captions"></use></svg>
+              <span>点击字幕列表中的一条进行编辑</span>
+            </div>
+
+            <div class="cue-editor" id="cue-editor" hidden>
+              <div class="cue-editor-head">
+                <span>第 <span id="cue-number">1</span> 条</span>
+                <button class="icon-btn danger-hover" id="btn-delete-cue" type="button" aria-label="删除这条字幕">
+                  <svg class="icon"><use href="#i-trash"></use></svg>
+                </button>
+              </div>
+              <div class="cue-time-grid">
+                <label class="field">
+                  <span class="field-label">开始</span>
+                  <div class="time-input">
+                    <input class="text-input" id="cue-start" type="number" step="0.01" min="0">
+                    <button class="mini-btn" id="cue-start-now" type="button">取播放头</button>
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field-label">结束</span>
+                  <div class="time-input">
+                    <input class="text-input" id="cue-end" type="number" step="0.01" min="0">
+                    <button class="mini-btn" id="cue-end-now" type="button">取播放头</button>
+                  </div>
+                </label>
+              </div>
+              <label class="field">
+                <span class="field-label">文本</span>
+                <textarea class="text-input" id="cue-text" rows="2"></textarea>
+              </label>
+              <div class="cue-editor-hint">修改后自动保存 · 换行会保留</div>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="export-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="export-title">
+      <div class="modal-head">
+        <div>
+          <h2 id="export-title">导出视频</h2>
+          <p class="modal-sub">字幕会直接烧进画面，成为视频的一部分</p>
+        </div>
+        <button class="icon-btn" id="btn-close-export" type="button" aria-label="关闭导出窗口">
+          <svg class="icon"><use href="#i-close"></use></svg>
+        </button>
+      </div>
+
+      <div class="modal-body" id="export-stage-form">
+        <div class="export-summary">
+          <div class="summary-item"><span>视频</span><strong id="export-video-name">—</strong></div>
+          <div class="summary-item"><span>字幕</span><strong id="export-subtitle-count">—</strong></div>
+          <div class="summary-item"><span>输出</span><strong>MP4 · H.264</strong></div>
+        </div>
+        <div class="field">
+          <span class="field-label">画质</span>
+          <div class="quality-grid">
+            <label class="quality-card">
+              <input type="radio" name="quality" value="high">
+              <span class="quality-body"><strong>高质量</strong><small>CRF 18 · 文件更大</small></span>
+            </label>
+            <label class="quality-card">
+              <input type="radio" name="quality" value="standard" checked>
+              <span class="quality-body"><strong>标准</strong><small>CRF 20 · 推荐</small></span>
+            </label>
+            <label class="quality-card">
+              <input type="radio" name="quality" value="compact">
+              <span class="quality-body"><strong>小体积</strong><small>CRF 24 · 更快</small></span>
+            </label>
+          </div>
+        </div>
+        <div class="export-note">
+          <svg class="icon"><use href="#i-clock"></use></svg>
+          <span>导出会按开始那一刻的样式与时间生成；期间请先不要替换文件。</span>
+        </div>
+      </div>
+
+      <div class="modal-body export-progress" id="export-stage-progress" hidden>
+        <div class="progress-head">
+          <strong id="export-percent">0%</strong>
+          <span id="export-speed">准备中…</span>
+        </div>
+        <div class="progress-large"><div class="progress-fill" id="export-bar"></div></div>
+        <div class="progress-foot">
+          <span id="export-time">00:00 / 00:00</span>
+          <span id="export-output-name"></span>
+        </div>
+      </div>
+
+      <div class="modal-body export-result" id="export-stage-done" hidden>
+        <div class="result-icon result-success"><svg class="icon icon-solid"><use href="#i-check"></use></svg></div>
+        <h3>烧录完成</h3>
+        <p class="result-path" id="export-done-name">—</p>
+        <p class="result-sub" id="export-done-size">—</p>
+      </div>
+
+      <div class="modal-body export-result" id="export-stage-error" hidden>
+        <div class="result-icon result-error"><svg class="icon"><use href="#i-alert"></use></svg></div>
+        <h3>导出没有完成</h3>
+        <p class="result-path" id="export-error-text">—</p>
+      </div>
+
+      <div class="modal-foot" id="export-foot-form">
+        <button class="btn btn-ghost" id="btn-export-cancel" type="button">取消</button>
+        <button class="btn btn-primary" id="btn-export-start" type="button">
+          <svg class="icon"><use href="#i-spark"></use></svg>
+          <span>开始烧录</span>
+        </button>
+      </div>
+      <div class="modal-foot" id="export-foot-progress" hidden>
+        <button class="btn btn-ghost" id="btn-export-stop" type="button">停止导出</button>
+      </div>
+      <div class="modal-foot" id="export-foot-done" hidden>
+        <button class="btn btn-ghost" id="btn-reveal-folder" type="button">
+          <svg class="icon"><use href="#i-folder"></use></svg>
+          <span>打开文件夹</span>
+        </button>
+        <a class="btn btn-primary" id="btn-download-export" href="#" download>
+          <svg class="icon"><use href="#i-download"></use></svg>
+          <span>下载视频</span>
+        </a>
+        <button class="btn btn-ghost" id="btn-export-done-close" type="button">完成</button>
+      </div>
+      <div class="modal-foot" id="export-foot-error" hidden>
+        <button class="btn btn-ghost" id="btn-export-error-close" type="button">关闭</button>
+        <button class="btn btn-primary" id="btn-export-retry" type="button">重新导出</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="confirm-modal" hidden>
+    <div class="modal modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="modal-head">
+        <h2 id="confirm-title">确认操作</h2>
+      </div>
+      <div class="modal-body">
+        <p class="confirm-message" id="confirm-message">确定吗？</p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="confirm-cancel" type="button">取消</button>
+        <button class="btn btn-primary" id="confirm-ok" type="button">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+  <input type="file" id="file-input" hidden multiple>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
